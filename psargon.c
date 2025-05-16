@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <pthread.h>
+#include <argon2.h>
 
 #define MAX_THREADS 16
 #define DEFAULT_THREAD_COUNT 1
@@ -34,6 +35,12 @@ char **create_ragged_array(const char *filename, int *file_count);
 void setup_logging(FILE **log_fp, const char *log_file, int verbose);
 void setup_output(FILE **output_fp, const char *output_file);
 void *thread_worker(void *arg);
+
+//global variables
+static int next_hash = 0;
+static pthread_mutex_t hash_mutex = PTHREAD_MUTEX_INITIALIZER;
+static char **cracked_passwords = NULL;
+
 
 
 static int count_lines(const char *string) {
@@ -128,11 +135,44 @@ void setup_output(FILE **output_fp, const char *output_file) {
 }
 
 void *thread_worker(void *arg) {
+    int index;
     threaddata *td = (threaddata *)arg;
-    if (td->verbose) {
-        fprintf(td->log_fp, "Thread %d starting work\n", td->thread_id);
+    int cracked;
+
+    while (1)
+    {
+        //pthread time!!!!! (dynamically)
+        pthread_mutex_lock(&hash_mutex);
+        index = next_hash++;
+        pthread_mutex_unlock(&hash_mutex);
+
+        if (index >= td->hash_count) {
+            break;
+        }
+        cracked = 0;
+        for (int j = 0; j < td->password_count; j++) {
+            if(argon2_verify(td->hashes[index], td->passwords[j],strlen(td->passwords[j]), Argon2_d) == 0) {
+                pthread_mutex_lock(&hash_mutex);
+                if(cracked_passwords[index] == NULL) {
+                    cracked_passwords[index] = (td->passwords[j]);
+                }
+                pthread_mutex_unlock(&hash_mutex);
+                cracked = 1;
+                td->cracked_count++;
+                if (td->verbose) {
+                    fprintf(td->log_fp, "Thread %d: Cracked hash %s with password %s\n", td->thread_id, td->hashes[index], td->passwords[j]);
+                }
+                break;
+            }
+        }
+        if(!cracked) {
+            td->failed_count++;
+            if (td->verbose) {
+                fprintf(td->log_fp, "Thread %d: Failed to crack hash %s\n", td->thread_id, td->hashes[index]);
+            }
+        }
+        
     }
-    // Thread processing logic will go here
     return NULL;
 }
 
@@ -207,6 +247,13 @@ int main(int argc, char *argv[]) {
         fprintf(log_fp, "Failed to load hash file: %s\n", hash_file);
         exit(EXIT_FAILURE);
     }
+    cracked_passwords = calloc(td[0].hash_count, sizeof(char *));
+    if(!cracked_passwords) {
+        fprintf(log_fp, "Failed to allocate memory for cracked passwords\n");
+        free(td[0].hashes[0]);
+        free(td[0].hashes);
+        exit(EXIT_FAILURE);
+    };
 
     // Load password file into first thread's data structure
     td[0].password_count = 0;
@@ -240,6 +287,16 @@ int main(int argc, char *argv[]) {
     // Wait for threads to complete
     for (int i = 0; i < thread_count; i++) {
         pthread_join(threads[i], NULL);
+    }
+    //password!
+    for(int i = 0; i < td[0].hash_count; i++) {
+        printf("| %4d ", i+1);
+        if(cracked_passwords[i]) {
+            printf("CRACKED: %s %s\n", cracked_passwords[i], td[0].hashes[i]);
+        } else {
+            printf("FAILED: %s\n", td[0].hashes[i]);
+        }
+        printf("      -----------------------------------------------------------\n");
     }
 
     // Clean up

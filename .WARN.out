@@ -1,3 +1,3 @@
 rm -f *.o *.lst psargon *~ \#*
-gcc -g3 -O0 -Wall -Werror -std=c11 -pedantic  -Wshadow -Wunreachable-code -Wredundant-decls -Wmissing-declarations -Wold-style-definition -Wmissing-prototypes -Wdeclaration-after-statement -Wno-return-local-addr -Wunsafe-loop-optimizations -Wuninitialized -Wextra -c psargon.c
-gcc -L/u/rchaney/argon2/lib/x86_64-linux-gnu -lm -no-pie -lz -lpthread -o psargon psargon.o
+gcc -g3 -O0 -Wall -Werror -std=c11 -pedantic  -Wshadow -Wunreachable-code -Wredundant-decls -Wmissing-declarations -Wold-style-definition -Wmissing-prototypes -Wdeclaration-after-statement -Wno-return-local-addr -Wunsafe-loop-optimizations -Wuninitialized -Wextra -I/u/rchaney/argon2/include -c psargon.c
+gcc -L/u/rchaney/argon2/lib/x86_64-linux-gnu -lm -no-pie -lz -lpthread /u/rchaney/argon2/lib/x86_64-linux-gnu/libargon2.so -o psargon psargon.o -L/u/rchaney/argon2/lib/x86_64-linux-gnu -lm -no-pie -lz -lpthread /u/rchaney/argon2/lib/x86_64-linux-gnu/libargon2.so

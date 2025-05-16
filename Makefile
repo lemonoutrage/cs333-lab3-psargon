@@ -2,9 +2,9 @@ CC = gcc
 AS = nasm
 
 DEFINES =
-CFLAGS = -g3 -O0 -Wall -Werror -std=c11 -pedantic  -Wshadow -Wunreachable-code -Wredundant-decls -Wmissing-declarations -Wold-style-definition -Wmissing-prototypes -Wdeclaration-after-statement -Wno-return-local-addr -Wunsafe-loop-optimizations -Wuninitialized -Wextra
+CFLAGS = -g3 -O0 -Wall -Werror -std=c11 -pedantic  -Wshadow -Wunreachable-code -Wredundant-decls -Wmissing-declarations -Wold-style-definition -Wmissing-prototypes -Wdeclaration-after-statement -Wno-return-local-addr -Wunsafe-loop-optimizations -Wuninitialized -Wextra -I/u/rchaney/argon2/include
 AFLAGS = -f elf32 -g3 -F dwarf
-LDFLAGS = -L/u/rchaney/argon2/lib/x86_64-linux-gnu -lm -no-pie -lz -lpthread
+LDFLAGS = -L/u/rchaney/argon2/lib/x86_64-linux-gnu -lm -no-pie -lz -lpthread /u/rchaney/argon2/lib/x86_64-linux-gnu/libargon2.so
 
 CPROG1 = psargon.c
 OPROG1 = psargon.o
@@ -16,7 +16,7 @@ all: $(targets)
 
 
 $(PROG1): $(OPROG1)
-	$(CC) $(LDFLAGS) -o $(PROG1) $(OPROG1)
+	$(CC) $(LDFLAGS) -o $(PROG1) $(OPROG1) $(LDFLAGS)
 
 $(OPROG1): $(CPROG1)
 	$(CC) $(CFLAGS) -c $(CPROG1)
