@@ -143,15 +143,16 @@ void *thread_worker(void *arg) {
     {
         //pthread time!!!!! (dynamically)
         pthread_mutex_lock(&hash_mutex);
-        index = next_hash++;
-        pthread_mutex_unlock(&hash_mutex);
-
-        if (index >= td->hash_count) {
+        index = next_hash;
+        if(index >= td->hash_count) {
+            pthread_mutex_unlock(&hash_mutex);
             break;
         }
+        next_hash++;
+        pthread_mutex_unlock(&hash_mutex);
         cracked = 0;
         for (int j = 0; j < td->password_count; j++) {
-            if(argon2_verify(td->hashes[index], td->passwords[j],strlen(td->passwords[j]), Argon2_d) == 0) {
+            if(argon2_verify(td->hashes[index], td->passwords[j],strlen(td->passwords[j]), Argon2_id) == 0) {
                 pthread_mutex_lock(&hash_mutex);
                 if(cracked_passwords[index] == NULL) {
                     cracked_passwords[index] = (td->passwords[j]);
@@ -290,15 +291,19 @@ int main(int argc, char *argv[]) {
     }
     //password!
     for(int i = 0; i < td[0].hash_count; i++) {
-        printf("| %4d ", i+1);
-        if(cracked_passwords[i]) {
-            printf("CRACKED: %s %s\n", cracked_passwords[i], td[0].hashes[i]);
+        if (cracked_passwords[i]) {
+            fprintf(output_fp, "CRACKED: %s %s\n", cracked_passwords[i], td[0].hashes[i]);
         } else {
-            printf("FAILED: %s\n", td[0].hashes[i]);
+            fprintf(output_fp, "FAILED: %s\n", td[0].hashes[i]);
         }
-        printf("      -----------------------------------------------------------\n");
+        // Print separator after each line except the last
+        /*
+        if (i < td[0].hash_count - 1) {
+            fprintf(output_fp, "      -----------------------------------------------------------\n");
+        }
+        */
     }
-
+    fflush(output_fp);
     // Clean up
     if (log_fp != stderr) {
         fclose(log_fp);
