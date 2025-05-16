@@ -2,9 +2,9 @@ CC = gcc
 AS = nasm
 
 DEFINES =
-CFLAGS = -m32 -g3 -O0 -Wall -Werror -std=c11 -pedantic  -Wshadow -Wunreachable-code -Wredundant-decls -Wmissing-declarations -Wold-style-definition -Wmissing-prototypes -Wdeclaration-after-statement -Wno-return-local-addr -Wunsafe-loop-optimizations -Wuninitialized -Wextra
+CFLAGS = -g3 -O0 -Wall -Werror -std=c11 -pedantic  -Wshadow -Wunreachable-code -Wredundant-decls -Wmissing-declarations -Wold-style-definition -Wmissing-prototypes -Wdeclaration-after-statement -Wno-return-local-addr -Wunsafe-loop-optimizations -Wuninitialized -Wextra
 AFLAGS = -f elf32 -g3 -F dwarf
-LDFLAGS = -m32 -lm -no-pie -lz
+LDFLAGS = -L/u/rchaney/argon2/lib/x86_64-linux-gnu -lm -no-pie -lz -lpthread
 
 CPROG1 = psargon.c
 OPROG1 = psargon.o
@@ -18,7 +18,7 @@ all: $(targets)
 $(PROG1): $(OPROG1)
 	$(CC) $(LDFLAGS) -o $(PROG1) $(OPROG1)
 
-$(OPROG1):
+$(OPROG1): $(CPROG1)
 	$(CC) $(CFLAGS) -c $(CPROG1)
 
 
@@ -27,11 +27,11 @@ $(OPROG1):
 
 clean:
 	rm -f *.o *.lst $(targets) *~ \#*
-ASSIGNMENT = 2
-TAR_FILE = grif29_labtwo.tar.gz
+
+TAR_FILE = grif29_labthree.tar.gz
 tar:
 	rm -f $(TAR_FILE)
-	tar czf $(TAR_FILE) makefile arvik.c
+	tar czf $(TAR_FILE) Makefile psargon.c
 backup:
 	git add .
 	git commit -m "Backup on $(shell date)"
